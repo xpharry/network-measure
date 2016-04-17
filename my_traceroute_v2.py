@@ -40,6 +40,9 @@ def main(dest_name):
         recv_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
         send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, udp)
 
+        start_time = time.time()
+        elapsed_time = 0
+
         # Set the TTL field on the packets.
         send_socket.setsockopt(socket.SOL_IP, socket.IP_TTL, ttl)
 
@@ -71,6 +74,7 @@ def main(dest_name):
             while not finished and tries > 0:
                 try:
                     _, curr_addr = recv_socket.recvfrom(512)
+                    elapsed_time = time.time() - start_time
                     finished = True
                     curr_addr = curr_addr[0] # intermediate hosts' IP address
                     try:
@@ -90,7 +94,11 @@ def main(dest_name):
             else:
                 curr_host = ""
 
-            sys.stdout.write("%s\n" % (curr_host))
+            sys.stdout.write("%s " % (curr_host))
+            if elapsed_time:
+                sys.stdout.write("%f\n" % (elapsed_time))
+            else:
+                sys.stdout.write("%s\n" % "")
 
             ttl += 1
 
