@@ -22,13 +22,7 @@ def main(dest_name):
     max_hops = 30
 
     ttl = 1 # TTL field
-
-    i = 0
     while True:
-        i += 1
-        print "now enter the No.%d iteration ..." % i
-        print "dest_addr: %s" % dest_addr
-
         # Create sockets for the connections.
         recv_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
         send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, udp)
@@ -40,33 +34,38 @@ def main(dest_name):
         recv_socket.bind(("", port))
         send_socket.sendto("", (dest_name, port))
 
+        sys.stdout.write(" %d  " % ttl) # ?
+
         # Get the intermediate hosts' IP addresses.
         curr_addr = None
         curr_name = None
-        try:
-            _, curr_addr = recv_socket.recvfrom(512)
 
-            curr_addr = curr_addr[0] # intermediate hosts' IP address
-            print "curr_addr: %s" % curr_addr
+        finished = False ##
+        tries = 3 ##
 
+        while not finished and tries > 0:
             try:
-                curr_name = socket.gethostbyaddr(curr_addr)[0]
+                _, curr_addr = recv_socket.recvfrom(512)
+                finished = True
+                curr_addr = curr_addr[0] # intermediate hosts' IP address
+                try:
+                    curr_name = socket.gethostbyaddr(curr_addr)[0]
+                except socket.error:
+                    curr_name = curr_addr
+            except socket.error as (errno, errmsg):
+                tries = tries - 1
+                sys.stdout.write("* ")
 
-            except socket.error:
-                curr_name = curr_addr
-
-        except socket.error:
-            pass
-        finally:
-            send_socket.close()
-            recv_socket.close()
+        send_socket.close()
+        recv_socket.close()
 
         # Turn the IP addresses into hostnames and print the data.
         if curr_addr is not None:
             curr_host = "%s (%s)" % (curr_name, curr_addr)
         else:
             curr_host = "*"
-        print "%d\t%s" % (ttl, curr_host)
+            
+        sys.stdout.write("%s\n" % (curr_host))
 
         ttl += 1
 

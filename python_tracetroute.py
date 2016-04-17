@@ -34,18 +34,18 @@ def main(dest_name):
         send_socket.setsockopt(socket.SOL_IP, socket.IP_TTL, ttl)
         
         # Build the GNU timeval struct (seconds, microseconds)
-        timeout = struct.pack("ll", 5, 0)
+        timeout = struct.pack("ll", 5, 0) # ?
         
         # Set the receive timeout so we behave more like regular traceroute
-        recv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeout)
+        recv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeout) # ?
         
         recv_socket.bind(("", port))
-        sys.stdout.write(" %d  " % ttl)
+        sys.stdout.write(" %d  " % ttl) # ?
         send_socket.sendto("", (dest_name, port))
         curr_addr = None
         curr_name = None
-        finished = False
-        tries = 3
+        finished = False ##
+        tries = 3 ##
         while not finished and tries > 0:
             try:
                 _, curr_addr = recv_socket.recvfrom(512)
