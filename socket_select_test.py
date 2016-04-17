@@ -10,8 +10,8 @@ import select
 import socket 
 import sys 
 
-host = 'localhost' 
-port = 50000 
+host = '' 
+port = 33434 
 backlog = 5 
 size = 1024 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
