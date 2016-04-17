@@ -8,6 +8,7 @@
 '''
 
 import socket
+import struct
 import sys
 import time
 
@@ -30,6 +31,12 @@ def main(dest_name):
         # Set the TTL field on the packets.
         send_socket.setsockopt(socket.SOL_IP, socket.IP_TTL, ttl)
 
+        # Build the GNU timeval struct (seconds, microseconds)
+        timeout = struct.pack("ll", 5, 0) # ?
+        
+        # Set the receive timeout so we behave more like regular traceroute
+        recv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeout) # ?
+        
         # Bind the sockets and send some packets.
         recv_socket.bind(("", port))
         send_socket.sendto("", (dest_name, port))
@@ -64,7 +71,7 @@ def main(dest_name):
             curr_host = "%s (%s)" % (curr_name, curr_addr)
         else:
             curr_host = "*"
-            
+
         sys.stdout.write("%s\n" % (curr_host))
 
         ttl += 1
