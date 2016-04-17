@@ -34,21 +34,6 @@ def main(dest_name):
     port = 33434
     max_hops = 30
 
-    # use select() to check the availability of the site
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
-        #setup receive socket
-        recv_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
-        recv_socket.bind(("", port))
-        #recv_socket.settimeout(10)
-        recv_socket.setblocking(0)
-        ready = select.select([recv_socket], [], [], 10)
-        print "size = " + str(len(ready))
-    except socket.error , msg:
-        print 'Socket could not be created. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
-        sys.exit()
-
-
     ttl = 1 # TTL field
     while True:
         # Create sockets for the connections.
@@ -68,40 +53,46 @@ def main(dest_name):
         recv_socket.bind(("", port))
         send_socket.sendto("", (dest_name, port))
 
-        sys.stdout.write(" %d  " % ttl) # ?
-
-        # Get the intermediate hosts' IP addresses.
-        curr_addr = None
-        curr_name = None
-
-        finished = False ##
-        tries = 3 ##
-
-        while not finished and tries > 0:
-            try:
-                _, curr_addr = recv_socket.recvfrom(512)
-                finished = True
-                curr_addr = curr_addr[0] # intermediate hosts' IP address
-                try:
-                    curr_name = socket.gethostbyaddr(curr_addr)[0]
-                except socket.error:
-                    curr_name = curr_addr
-            except socket.error as (errno, errmsg):
-                tries = tries - 1
-                sys.stdout.write("* ")
-
-        send_socket.close()
-        recv_socket.close()
-
-        # Turn the IP addresses into hostnames and print the data.
-        if curr_addr is not None:
-            curr_host = "%s (%s)" % (curr_name, curr_addr)
+        ready = select.select([recv_socket], [], [], 10)
+        # Test for timeout
+        if ready == [ [], [], [] ]:
+            print "Ten seconds elapsed.\n"
         else:
-            curr_host = ""
+            # use select() to check the availability of the site
+            sys.stdout.write(" %d  " % ttl) # ?
 
-        sys.stdout.write("%s\n" % (curr_host))
+            # Get the intermediate hosts' IP addresses.
+            curr_addr = None
+            curr_name = None
 
-        ttl += 1
+            finished = False ##
+            tries = 3 ##
+
+            while not finished and tries > 0:
+                try:
+                    _, curr_addr = recv_socket.recvfrom(512)
+                    finished = True
+                    curr_addr = curr_addr[0] # intermediate hosts' IP address
+                    try:
+                        curr_name = socket.gethostbyaddr(curr_addr)[0]
+                    except socket.error:
+                        curr_name = curr_addr
+                except socket.error as (errno, errmsg):
+                    tries = tries - 1
+                    sys.stdout.write("* ")
+
+            send_socket.close()
+            recv_socket.close()
+
+            # Turn the IP addresses into hostnames and print the data.
+            if curr_addr is not None:
+                curr_host = "%s (%s)" % (curr_name, curr_addr)
+            else:
+                curr_host = ""
+
+            sys.stdout.write("%s\n" % (curr_host))
+
+            ttl += 1
 
         # End the loop.
         # two conditions for exiting our loop — 1. reached our destination
