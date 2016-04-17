@@ -12,6 +12,17 @@ import struct
 import sys
 import time
 
+# We want unbuffered stdout so we can provide live feedback for
+# each TTL. You could also use the "-u" flag to Python.
+class flushfile(file):
+    def __init__(self, f):
+        self.f = f
+    def write(self, x):
+        self.f.write(x)
+        self.f.flush()
+
+sys.stdout = flushfile(sys.stdout)
+
 def main(dest_name):
     # Turn a hostname into an IP address.
     dest_addr = socket.gethostbyname(dest_name)
@@ -36,7 +47,7 @@ def main(dest_name):
         
         # Set the receive timeout so we behave more like regular traceroute
         recv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeout) # ?
-        
+
         # Bind the sockets and send some packets.
         recv_socket.bind(("", port))
         send_socket.sendto("", (dest_name, port))
@@ -70,7 +81,7 @@ def main(dest_name):
         if curr_addr is not None:
             curr_host = "%s (%s)" % (curr_name, curr_addr)
         else:
-            curr_host = "*"
+            curr_host = ""
 
         sys.stdout.write("%s\n" % (curr_host))
 
