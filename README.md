@@ -24,3 +24,6 @@ EECS425 Project 2 written in Python
 		$ sudo ython my_traceroute.py
 
 	5. socket.select() test
+
+
+	6. work with raw sockets

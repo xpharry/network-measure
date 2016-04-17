@@ -31,36 +31,35 @@ def main(dest_name):
         # Create sockets for the connections.
         recv_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
         send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, udp)
-        print 2
+
         # Set the TTL field on the packets.
         send_socket.setsockopt(socket.SOL_IP, socket.IP_TTL, ttl)
-        print 3
+
         # Bind the sockets and send some packets.
         recv_socket.bind(("", port))
         send_socket.sendto("", (dest_name, port))
-        print 4
+
         # Get the intermediate hosts' IP addresses.
         curr_addr = None
         curr_name = None
         try:
             _, curr_addr = recv_socket.recvfrom(512)
-            print 4.1
+
             curr_addr = curr_addr[0] # intermediate hosts' IP address
             print "curr_addr: %s" % curr_addr
-            print 4.2
+
             try:
                 curr_name = socket.gethostbyaddr(curr_addr)[0]
-                print 4.4
+
             except socket.error:
                 curr_name = curr_addr
-                print 4.6
+
         except socket.error:
             pass
         finally:
             send_socket.close()
             recv_socket.close()
-            print 4.8
-        print 5
+
         # Turn the IP addresses into hostnames and print the data.
         if curr_addr is not None:
             curr_host = "%s (%s)" % (curr_name, curr_addr)
@@ -69,7 +68,7 @@ def main(dest_name):
         print "%d\t%s" % (ttl, curr_host)
 
         ttl += 1
-        print 6
+        
         # End the loop.
         # two conditions for exiting our loop — 1. reached our destination
         #                                       2. exceeded some maximum number of hops.
@@ -77,4 +76,4 @@ def main(dest_name):
             break
 
 if __name__ == "__main__":
-    main('localhost')
+    main('google.com')
