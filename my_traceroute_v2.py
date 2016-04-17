@@ -33,6 +33,21 @@ def main(dest_name):
     port = 33434
     max_hops = 30
 
+    # use select() to check the availability of the site
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
+        #setup receive socket
+        recv_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
+        recv_socket.bind(("", port))
+        #recv_socket.settimeout(10)
+        recv_socket.setblocking(0)
+        ready = select.select([recv_socket], [], [], 10)
+        print "size = " + str(len(ready))
+    except socket.error , msg:
+        print 'Socket could not be created. Error Code : ' + str(msg[0]) + ' Message ' + msg[1]
+        sys.exit()
+
+
     ttl = 1 # TTL field
     while True:
         # Create sockets for the connections.
