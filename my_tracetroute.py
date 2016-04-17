@@ -28,6 +28,7 @@ def main(dest_name):
         i += 1
         print "now enter the No.%d iteration ..." % i
         print "dest_addr: %s" % dest_addr
+        
         # Create sockets for the connections.
         recv_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, icmp)
         send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, udp)
@@ -68,7 +69,7 @@ def main(dest_name):
         print "%d\t%s" % (ttl, curr_host)
 
         ttl += 1
-        
+
         # End the loop.
         # two conditions for exiting our loop — 1. reached our destination
         #                                       2. exceeded some maximum number of hops.

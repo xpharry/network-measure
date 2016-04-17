@@ -10,7 +10,7 @@ import select
 import socket 
 import sys 
 
-host = '' 
+host = '127.0.0.1' 
 port = 33434 
 backlog = 5 
 size = 1024 
@@ -21,29 +21,33 @@ input = [server,sys.stdin]
 running = 1 
 while running: 
     print "in loop now ..."
-    inputready,outputready,exceptready = select.select(input,[],[]) 
+    inputready,outputready,exceptready = select.select(input,[],[],10) 
     print "in loop now ... ..."
-    for s in inputready: 
 
-        if s == server: 
-            print 1
-            # handle the server socket 
-            client, address = server.accept() 
-            input.append(client) 
+    if len(inputready):
+        for s in inputready: 
 
-        elif s == sys.stdin: 
-            print 2
-            # handle standard input 
-            junk = sys.stdin.readline() 
-            running = 0 
+            if s == server: 
+                print "s == server"
+                # handle the server socket 
+                client, address = server.accept() 
+                input.append(client) 
 
-        else: 
-            print 3
-            # handle all other sockets 
-            data = s.recv(size) 
-            if data: 
-                s.send(data) 
+            elif s == sys.stdin: 
+                print "s == sys.stdin"
+                # handle standard input 
+                junk = sys.stdin.readline() 
+                running = 0 
+
             else: 
-                s.close() 
-                input.remove(s) 
+                print "else"
+                # handle all other sockets 
+                data = s.recv(size) 
+                if data: 
+                    s.send(data) 
+                else: 
+                    s.close() 
+                    input.remove(s) 
+    else:
+        print 'Timeout'
 server.close()
