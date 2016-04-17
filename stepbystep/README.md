@@ -26,4 +26,6 @@ EECS425 Project 2 written in Python
 	5. socket.select() test
 
 
-	6. work with raw sockets
+	6. combine 4 & 5
+
+	
