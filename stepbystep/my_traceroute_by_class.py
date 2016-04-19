@@ -12,18 +12,19 @@ import struct
 import select 
 import sys
 import time
+import struct
+# import string
+# import os
 
-# We want unbuffered stdout so we can provide live feedback for each TTL.
-# You could also use the "-u" flag to Python.
-class flushfile(file):
-    def __init__(self, f):
-        self.f = f
-    def write(self, x):
-        self.f.write(x)
-        self.f.flush()
+# # Helper functions
+# import re
+# rx_addr = re.compile('\([0-9]+\)\.\([0-9]+\)\.\([0-9]+\)\.\([0-9]+\)')
 
-sys.stdout = flushfile(sys.stdout)
-
+# def dotted_to_int(s, rx=rx_addr):
+#     if rx.match(s) == -1:
+#         raise ValueError, "not a valid IP address"
+#     parts = map(lambda x:chr(x), map(string.atoi, rx.group(1, 2, 3, 4)))
+#     return string.join(parts, '')
 
 class Tracer:
     def __init__(self, dest_name):
@@ -33,7 +34,7 @@ class Tracer:
         self.port = 33434
         self.ttl = 32
         self.max_hops = 30
-        self.max_wait = 3.0
+        self.max_wait = 10.0
         self.nqueries = 3
         self.reached = 0
 
@@ -49,9 +50,9 @@ class Tracer:
             if reply:
                 delta = recv_at - send_at
             else:
-                delta = -1
+                delta = -1.0
 
-            self.display_results(delta)
+            self.display_results(reply, delta)
             if self.reached:
                 break
 
@@ -77,21 +78,40 @@ class Tracer:
 
     def send_probe(self, ttl):
         start_time = time.time()
-        self.send_socket.sendto("python - geometry distance measurement", (self.dest_name, self.port))
+        # send_pkt = struct.pack('hhl', 1, 2, 3)
+        header = struct.pack('cchhhcc',
+            chr((4 & 0x0f) << 4 
+            | (5 & 0x0f)),    # 4bits each
+            chr(0x00 & 0xff),
+            20,
+            0,
+            0,     # what about flags?
+            chr(32 & 0xff),
+            chr(0 & 0xff))
+        # _dest_addr = dotted_to_int(self.dest_addr)
+        # _src_addr = dotted_to_int(os.uname()[1])
+        send_pkt = header + '\000\000' + "192.168.1.77" + self.dest_addr
+        self.send_socket.sendto(send_pkt, (self.dest_name, self.port))
         return start_time
 
     def get_reply(self):
+        start = time.time()
         timeout = self.max_wait
 
+        tries = 0
         while True:
+            tries += 1
+            if tries == 5:
+                print "Fail to reach the remote server! Give up."
+                return
             # use select() to check the availability of the site
             inputready, outputready, exceptready = select.select([self.recv_socket], [], [], timeout)
 
             # Test for timeout
             if inputready:
                 try:
-                    packet, curr_addr = recv_socket.recvfrom(4096)
-                    finished = True
+                    reply, curr_addr = self.recv_socket.recvfrom(4096)
+                    self.reached = 1
                     curr_addr = curr_addr[0] # intermediate hosts' IP address
                     try:
                         curr_name = socket.gethostbyaddr(curr_addr)[0]
@@ -99,21 +119,75 @@ class Tracer:
                         curr_name = curr_addr
                 except socket.error as (errno, errmsg):
                     sys.stdout.write("* ")
-
                 arrive_time = time.time()
-                _reply = ip.Packet(packet)
-                reply = icmp.Packet(_reply.data)
-
-            if reply.type != icmp.ICMP_UNREACH:
-                self.reached = 1
-                return _reply, arrive_time
+                if self.reached == 1:
+                    return reply, arrive_time
             timeout = (start + self.max_wait) - time.time()
             if timeout < 0:
                 return None, None
 
-    def display_results(self, delta):
-        print "time elapsed = %f" % delta
+    def display_results(self, reply, delta):
+        if not reply:
+            print "timeout!"
+            return
 
+        data = reply[0:20]
+        ip_header_data = struct.unpack('!BBHHHBBH4s4s', data)
+
+        print ip_header_data
+        print len(ip_header_data)
+        #To the the ip version we have to shift 
+        #the first element 4 bits right. Because in the first element
+        #is stored the ip version and the header lenght in this way
+        #first four bits are ip version and the last 4 bites are
+        #the header lenghth  
+        ip_version = ip_header_data[0] >> 4
+
+        #Now to get the header lenght we use "and" operation to make the
+        #Ip versional bits equal to zero, in order to the the desired data
+        IHL = ip_header_data[0] & 0x0F
+
+        #Diferentiated services doesn't need any magic opperations,
+        #so we jus grab it from the tuple
+        diff_services = ip_header_data[1]
+
+        #Total lenght is also easy to extract
+        total_length = ip_header_data[2]
+
+        #The same goes for identification 
+        id_ = ip_header_data[3]
+
+        #The "Flags" and Fragment Offset are situated in a sinle
+        #element from the forth element of the tuple.
+        #Flag is 3 bits (Most significant), so we make "and" with 1110 0000 0000 0000(=0xE000)
+        #to leave 3 most significant bits and then shift them right 13 positions
+        flags = ip_header_data[4] & 0xE000 >> 13
+
+        #The next elements are easy to get
+        TTL      = ip_header_data[5]
+        protocol = ip_header_data[6]
+        checksum = ip_header_data[7]
+        source   = ip_header_data[8]
+        destinat = ip_header_data[9]     
+        
+        #and the rest data from the "packet" variable is the payload so we
+        #extract it also
+        payload = reply[20:]
+
+        print "__________________NEW_PACKET__________________"
+        print "Version: %s  \n\rHeader lenght: %s"  %(ip_version,IHL)
+        print "Diferentiated services: %s \n\rID: %s" %(diff_services, id_)
+        print "Flags: %s \n\rTTL: %s \n\rProtocol: %s" %(flags,TTL,protocol)
+        print "Checksum: %s \n\rSource: %s \n\rDestination: %s" %(checksum, socket.inet_ntoa(source),socket.inet_ntoa(destinat))
+        print "Payload: %s" %(payload)
+
+        icmpHeader = reply[20:28]
+        type, code, checksum, packetID, sequence = struct.unpack(
+            "bbHHh", icmpHeader
+        )
+        print type
+        print code
+        print checksum
 
 def main(dest_name):
     tracer = Tracer(dest_name)

@@ -21,11 +21,26 @@ EECS425 Project 2 written in Python
 
 		need root permission
 		
-		$ sudo ython my_traceroute.py
+		$ sudo python my_traceroute.py
 
 	5. socket.select() test
 
+		$ sudo python my_traceroute_v2.py
 
-	6. combine 4 & 5
+	6. by class
+
+		$ sudo python my_traceroute_by_class.py
+
+	7. compute distance based on coordinates
+
+		$ python compute_dist.py
+
+	8. use geo database
+
+		$ python use_geoip2_database.py
+
+	9. compute distance between IPs
+
+		$ python compute_ip_dist.py
 
 	
