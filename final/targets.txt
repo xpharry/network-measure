@@ -1,10 +1,11 @@
-﻿"qq.com"
-﻿"livedoor.jp"
-﻿"steamcommunity.com"
-﻿"sourceforge.net"
-﻿"blackboard.com" ﻿
-﻿"souq.com"
-﻿"kdnet.net"
-"instructables.com"
-﻿"mcafee.com"
-﻿"match.com"
+﻿# targets
+	qq.com
+	livedoor.jp
+	steamcommunity.com
+	sourceforge.net
+	blackboard.com
+	souq.com
+	kdnet.net
+	instructables.com
+	mcafee.com
+	match.com

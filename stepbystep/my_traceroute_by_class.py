@@ -183,15 +183,18 @@ class Tracer:
         print "Diferentiated services: %s \n\rID: %s" %(diff_services, id_)
         print "Flags: %s \n\rTTL: %s \n\rProtocol: %s" %(flags,TTL,protocol)
         print "Checksum: %s \n\rSource: %s \n\rDestination: %s" %(checksum, socket.inet_ntoa(source),socket.inet_ntoa(destinat))
-        print "Payload: %s" %(payload)
+        print "Payload: %8s" %(payload)
+        print
 
         icmpHeader = reply[20:28]
         type, code, checksum, packetID, sequence = struct.unpack(
             "bbHHh", icmpHeader
         )
-        print type
-        print code
-        print checksum
+        print "type: %d" % type
+        print "code: %d" % code
+        print "checksum: %d" % checksum
+        print "packetID: %d" % packetID
+        print "sequence: %d" % sequence
 
 def main(dest_name):
     tracer = Tracer(dest_name)
