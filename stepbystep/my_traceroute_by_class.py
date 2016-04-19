@@ -37,7 +37,7 @@ class Tracer:
         self.max_wait = 10.0
         self.nqueries = 3
         self.reached = 0
-
+        self.build_probe_packet()
         self.open_sockets()
 
     def trace(self):
@@ -60,6 +60,7 @@ class Tracer:
     def open_sockets(self):
         # Create sockets for the connections.
         self.recv_socket = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
+        # self.send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.send_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 
         # Build the GNU timeval struct (seconds, microseconds)
@@ -67,17 +68,13 @@ class Tracer:
         # Set the receive timeout so we behave more like regular traceroute
         self.recv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVTIMEO, timeout)
         # Set the TTL field on the packets.
-        self.send_socket.setsockopt(socket.IPPROTO_IP, socket.IP_TTL, self.ttl)
+        self.send_socket.setsockopt(socket.SOL_IP, socket.IP_TTL, self.ttl)
 
         # Bind the sockets and send some packets.
         self.recv_socket.bind(("", self.port))
         self.send_socket.sendto("", (self.dest_name, self.port))
 
-    def build_probe_packet(self, dest):
-        pass
-
-    def send_probe(self, ttl):
-        start_time = time.time()
+    def build_probe_packet(self):
         # send_pkt = struct.pack('hhl', 1, 2, 3)
         header = struct.pack('cchhhcc',
             chr((4 & 0x0f) << 4 
@@ -90,8 +87,15 @@ class Tracer:
             chr(0 & 0xff))
         # _dest_addr = dotted_to_int(self.dest_addr)
         # _src_addr = dotted_to_int(os.uname()[1])
-        send_pkt = header + '\000\000' + "192.168.1.77" + self.dest_addr
-        self.send_socket.sendto(send_pkt, (self.dest_name, self.port))
+        self.send_pkt = header + '\000\000' + "192.168.1.77" + self.dest_addr
+        self.send_pkt = self.send_pkt + "python "*3
+        self.packlen = len(self.send_pkt)
+
+
+    def send_probe(self, ttl):
+        start_time = time.time()
+
+        self.send_socket.sendto(self.send_pkt, (self.dest_name, self.port))
         return start_time
 
     def get_reply(self):
