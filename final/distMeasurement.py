@@ -67,9 +67,11 @@ class Tracer:
             chr(0 & 0xff))
         # _dest_addr = dotted_to_int(self.dest_addr)
         # _src_addr = dotted_to_int(os.uname()[1])
-        self.send_pkt = "192.168.1.77" + self.dest_addr
+        self.send_pkt = "We are trying to reach " + self.dest_addr
         self.send_pkt = self.send_pkt + "python "*3
         self.packlen = len(self.send_pkt)
+
+        print "sent a packet with length = %d" %(self.packlen)
 
 
     def send_probe(self):
@@ -160,9 +162,11 @@ class Tracer:
         # print "sequence: %d" % sequence
 
     def process_udp_header(self, data):
-        src_port, dest_port, length, checksum = struct.unpack("HHHH", data)
+        src_port, dest_port, protocol, length, checksum = struct.unpack("HHBBH", data)
         print "src_port: %d" % src_port
         print "dest_port: %d" % dest_port
+        print "zero: %d" % (protocol >> 4)
+        print "protocol: %d" % (protocol & 0x0F)
         print "length: %d" % length
         print "checksum: %d" % checksum
 
@@ -184,6 +188,7 @@ class Tracer:
 
         print "TTL: %s" %(TTL)
         print "time elapsed: %f\r" %(delta)
+        print "data size: %d" %(len(reply) - 20 - 8 - 20 -8)
         print "Payload: %s" %(payload)
 
 def importServers():
