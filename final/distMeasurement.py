@@ -159,18 +159,27 @@ class Tracer:
         # print "packetID: %d" % packetID
         # print "sequence: %d" % sequence
 
+    def process_udp_header(self, data):
+        src_port, dest_port, length, checksum = struct.unpack("HHHH", data)
+        print "src_port: %d" % src_port
+        print "dest_port: %d" % dest_port
+        print "length: %d" % length
+        print "checksum: %d" % checksum
+
     def display_results(self, reply, delta):
         if not reply:
             print "timeout!"
             return
 
         ip_header1 = reply[0:20]
-        icmpHeader = reply[20:28]
+        icmp_header = reply[20:28]
         ip_header2 = reply[28:48]
-        payload = reply[48:]
+        udp_header = reply[48:56]
+        payload = reply[56:]
 
         self.process_ip_header(ip_header1)
-        self.process_icmp_header(icmpHeader)
+        self.process_icmp_header(icmp_header)
+        self.process_udp_header(udp_header)
         TTL = self.process_ip_header(ip_header2)
 
         print "TTL: %s" %(TTL)
