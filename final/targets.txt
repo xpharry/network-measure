@@ -1,11 +1,11 @@
 ﻿# targets
-	qq.com
-	livedoor.jp
-	steamcommunity.com
-	sourceforge.net
-	blackboard.com
-	souq.com
-	kdnet.net
-	instructables.com
-	mcafee.com
-	match.com
+web.mit.edu
+livedoor.jp
+steamcommunity.com
+sourceforge.net
+gutenberg.org
+souq.com
+soundcloud.com
+instructables.com
+makezine.com
+dailyrotation.com

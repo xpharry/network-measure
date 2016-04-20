@@ -52,7 +52,7 @@ class Tracer:
 
         # Bind the sockets and send some packets.
         self.recv_socket.bind(("", self.port))
-        self.send_socket.sendto("", (self.dest_name, self.port))
+        # self.send_socket.sendto("", (self.dest_name, self.port))
 
     def build_probe_packet(self):
         # send_pkt = struct.pack('hhl', 1, 2, 3)
@@ -67,7 +67,7 @@ class Tracer:
             chr(0 & 0xff))
         # _dest_addr = dotted_to_int(self.dest_addr)
         # _src_addr = dotted_to_int(os.uname()[1])
-        self.send_pkt = header + '\000\000' + "192.168.1.77" + self.dest_addr
+        self.send_pkt = "192.168.1.77" + self.dest_addr
         self.send_pkt = self.send_pkt + "python "*3
         self.packlen = len(self.send_pkt)
 
@@ -105,16 +105,9 @@ class Tracer:
             if timeout < 0:
                 return None, None
 
-    def display_results(self, reply, delta):
-        if not reply:
-            print "timeout!"
-            return
-
-        data = reply[0:20]
+    def process_ip_header(self, data):
         ip_header_data = struct.unpack('!BBHHHBBH4s4s', data)
 
-        print ip_header_data
-        print len(ip_header_data)
         #To the the ip version we have to shift 
         #the first element 4 bits right. Because in the first element
         #is stored the ip version and the header lenght in this way
@@ -148,28 +141,41 @@ class Tracer:
         checksum = ip_header_data[7]
         source   = ip_header_data[8]
         destinat = ip_header_data[9]     
-        
-        #and the rest data from the "packet" variable is the payload so we
-        #extract it also
-        payload = reply[20:]
 
-        print "__________________NEW_PACKET__________________"
-        print "Version: %s  \n\rHeader lenght: %s"  %(ip_version,IHL)
-        print "Diferentiated services: %s \n\rID: %s" %(diff_services, id_)
-        print "Flags: %s \n\rTTL: %s \n\rProtocol: %s" %(flags,TTL,protocol)
-        print "Checksum: %s \n\rSource: %s \n\rDestination: %s" %(checksum, socket.inet_ntoa(source),socket.inet_ntoa(destinat))
-        print "Payload: %8s" %(payload)
-        print
+        # print "__________________NEW_PACKET__________________"
+        # print "Version: %s  \n\rHeader lenght: %s"  %(ip_version,IHL)
+        # print "Diferentiated services: %s \n\rID: %s" %(diff_services, id_)
+        # print "Flags: %s \n\rTTL: %s \n\rProtocol: %s" %(flags,TTL,protocol)
+        # print "Checksum: %s \n\rSource: %s \n\rDestination: %s" %(checksum, socket.inet_ntoa(source),socket.inet_ntoa(destinat))
+        # print "Payload: %8s" %(payload)
+        # print
+        return TTL
 
+    def process_icmp_header(self, data):
+        type, code, checksum, packetID, sequence = struct.unpack("bbHHh", data)
+        # print "type: %d" % type
+        # print "code: %d" % code
+        # print "checksum: %d" % checksum
+        # print "packetID: %d" % packetID
+        # print "sequence: %d" % sequence
+
+    def display_results(self, reply, delta):
+        if not reply:
+            print "timeout!"
+            return
+
+        ip_header1 = reply[0:20]
         icmpHeader = reply[20:28]
-        type, code, checksum, packetID, sequence = struct.unpack(
-            "bbHHh", icmpHeader
-        )
-        print "type: %d" % type
-        print "code: %d" % code
-        print "checksum: %d" % checksum
-        print "packetID: %d" % packetID
-        print "sequence: %d" % sequence
+        ip_header2 = reply[28:48]
+        payload = reply[48:]
+
+        self.process_ip_header(ip_header1)
+        self.process_icmp_header(icmpHeader)
+        TTL = self.process_ip_header(ip_header2)
+
+        print "TTL: %s" %(TTL)
+        print "time elapsed: %f\r" %(delta)
+        print "Payload: %s" %(payload)
 
 def importServers():
     # Open a file
@@ -191,13 +197,15 @@ def importServers():
 
 def main():
     ip_list = importServers()
+    i = 0;
     for dest_name in ip_list:
+        i = i+1
         dest_name = dest_name.strip()
-        print "======== destination ip: %s =========" % dest_name
+        print "destination No.%d: %s" %(i, dest_name)
         dest_name = u'%s' %dest_name
         tracer = Tracer(dest_name)
         tracer.trace()
-        print "======== this ip probing ends here ========="
+        print
 
 if __name__ == '__main__':
     main()
