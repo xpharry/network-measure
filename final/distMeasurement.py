@@ -81,6 +81,7 @@ class Tracer:
         self.send_socket.sendto(self.send_pkt, (self.dest_name, self.port))
         return start_time
 
+    # got some hint from http://staff.washington.edu/jon/python-course/python_traceroute.py
     def get_reply(self):
         start = time.time()
         timeout = self.max_wait
@@ -108,6 +109,7 @@ class Tracer:
             if timeout < 0:
                 return None, None
 
+    # I referred to struct.unpack package and ip, icmp and udp header format
     def process_ip_header(self, data):
         ip_header_data = struct.unpack('!BBHHHBBH4s4s', data)
 
