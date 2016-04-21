@@ -56,21 +56,22 @@ class Tracer:
 
     def build_probe_packet(self):
         # send_pkt = struct.pack('hhl', 1, 2, 3)
-        header = struct.pack('cchhhcc',
-            chr((4 & 0x0f) << 4 
-            | (5 & 0x0f)),    # 4bits each
-            chr(0x00 & 0xff),
-            20,
-            0,
-            0,     # what about flags?
-            chr(32 & 0xff),
-            chr(0 & 0xff))
+        # header = struct.pack('cchhhcc',
+        #     chr((4 & 0x0f) << 4 
+        #     | (5 & 0x0f)),    # 4bits each
+        #     chr(0x00 & 0xff),
+        #     20,
+        #     0,
+        #     0,     # what about flags?
+        #     chr(32 & 0xff),
+        #     chr(0 & 0xff))
         # _dest_addr = dotted_to_int(self.dest_addr)
         # _src_addr = dotted_to_int(os.uname()[1])
         self.send_pkt = "We are trying to reach " + self.dest_addr
         self.send_pkt = self.send_pkt + "python "*3
         self.packlen = len(self.send_pkt)
 
+        print "packet content:" + self.send_pkt
         print "sent a packet with length = %d" %(self.packlen)
 
 
@@ -144,31 +145,36 @@ class Tracer:
         source   = ip_header_data[8]
         destinat = ip_header_data[9]     
 
-        # print "__________________NEW_PACKET__________________"
-        # print "Version: %s  \n\rHeader lenght: %s"  %(ip_version,IHL)
-        # print "Diferentiated services: %s \n\rID: %s" %(diff_services, id_)
-        # print "Flags: %s \n\rTTL: %s \n\rProtocol: %s" %(flags,TTL,protocol)
-        # print "Checksum: %s \n\rSource: %s \n\rDestination: %s" %(checksum, socket.inet_ntoa(source),socket.inet_ntoa(destinat))
-        # print "Payload: %8s" %(payload)
-        # print
+        print "** IP Header **"
+        print "  Version: %s" %(ip_version)
+        print "  Header lenght: %s"  %(IHL)
+        print "  Diferentiated services: %s" %(diff_services)
+        print "  ID: %s" %(id_)
+        print "  Flags: %s" %(flags)
+        print "  TTL: %s" %(TTL)
+        print "  Protocol: %s" %(protocol)
+        print "  Checksum: %s \n\r  Source: %s \n\r  Destination: %s" %(checksum, socket.inet_ntoa(source),socket.inet_ntoa(destinat))
         return TTL
 
     def process_icmp_header(self, data):
         type, code, checksum, packetID, sequence = struct.unpack("bbHHh", data)
-        # print "type: %d" % type
-        # print "code: %d" % code
-        # print "checksum: %d" % checksum
-        # print "packetID: %d" % packetID
-        # print "sequence: %d" % sequence
+        print "** ICMP Header **"
+        print "  type: %d" % type
+        print "  code: %d" % code
+        print "  checksum: %d" % checksum
+        print "  packetID: %d" % packetID
+        print "  sequence: %d" % sequence
 
     def process_udp_header(self, data):
         src_port, dest_port, protocol, length, checksum = struct.unpack("HHBBH", data)
-        print "src_port: %d" % src_port
-        print "dest_port: %d" % dest_port
-        print "zero: %d" % (protocol >> 4)
-        print "protocol: %d" % (protocol & 0x0F)
-        print "length: %d" % length
-        print "checksum: %d" % checksum
+        print "** UDP Header **"
+        print "  src_port: %d" % src_port
+        print "  dest_port: %d" % dest_port
+        print "  zero: %d" % (protocol >> 4)
+        print "  protocol: %d" % (protocol & 0x0F)
+        print "  length: %d" % length
+        print "  checksum: %d" % checksum
+        return length
 
     def display_results(self, reply, delta):
         if not reply:
@@ -183,13 +189,14 @@ class Tracer:
 
         self.process_ip_header(ip_header1)
         self.process_icmp_header(icmp_header)
-        self.process_udp_header(udp_header)
+        udp_length = self.process_udp_header(udp_header)
         TTL = self.process_ip_header(ip_header2)
 
-        print "TTL: %s" %(TTL)
-        print "time elapsed: %f\r" %(delta)
-        print "data size: %d" %(len(reply) - 20 - 8 - 20 -8)
-        print "Payload: %s" %(payload)
+        print "**** Results: ****"
+        print "  number of hops: %s" %(self.ttl - TTL + 1)
+        print "  time elapsed: %f\r" %(delta)
+        print "  data size: %d" %(udp_length - 8)
+        print "  Payload: %s" %(payload)
 
 def importServers():
     # Open a file
@@ -215,7 +222,7 @@ def main():
     for dest_name in ip_list:
         i = i+1
         dest_name = dest_name.strip()
-        print "destination No.%d: %s" %(i, dest_name)
+        print "********** destination No.%d: %s **********" %(i, dest_name)
         dest_name = u'%s' %dest_name
         tracer = Tracer(dest_name)
         tracer.trace()
