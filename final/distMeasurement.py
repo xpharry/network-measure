@@ -68,10 +68,13 @@ class Tracer:
         # _dest_addr = dotted_to_int(self.dest_addr)
         # _src_addr = dotted_to_int(os.uname()[1])
         self.send_pkt = "We are trying to reach " + self.dest_addr
-        self.send_pkt = self.send_pkt + "python "*3
+        self.send_pkt = self.send_pkt + "python *********"
+        self.send_pkt = self.send_pkt[0:50]
+        self.send_pkt = self.send_pkt * 29
+        self.send_pkt = self.send_pkt + "packet should end here"
         self.packlen = len(self.send_pkt)
 
-        print "packet content:" + self.send_pkt
+        # print "packet content:" + self.send_pkt
         print "sent a packet with length = %d" %(self.packlen)
 
 
