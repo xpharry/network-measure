@@ -109,7 +109,9 @@ class Tracer:
             if timeout < 0:
                 return None, None
 
-    # I referred to struct.unpack package and ip, icmp and udp header format
+    # I referred to https://gist.github.com/DTailor/2638962 for an example to decode ip header
+    # then followed the similar procedure when it comes to icmp and udp headers
+    # and also checked struct.unpack package and ip, icmp and udp header format
     def process_ip_header(self, data):
         ip_header_data = struct.unpack('!BBHHHBBH4s4s', data)
 
